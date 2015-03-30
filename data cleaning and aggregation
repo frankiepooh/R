@@ -1,0 +1,136 @@
+setwd("C:/Users/favila/Desktop/R")
+
+# install.packages("plyr")
+library(plyr) # load package "plyr"
+library(ggplot2)
+library(reshape2)
+
+#Importing csv
+raw <- read.csv(file="15.05.0_capacity.csv",sep=',',header=TRUE,as.is=TRUE)
+
+
+#clean the columns
+raw <- subset(raw, select=c(
+  Project,
+  Key,
+  Priority,
+  Issue.Type,
+  Department,
+  Estimated.Time,
+  Estimated.QA.Time,
+  Story.Points,
+  Resolution))
+
+
+#Cleaning
+raw[is.na(raw)] <- 0
+
+onshore_clean <- subset(raw,(raw$Resolution !="Won't Fix") 
+                        & (raw$Resolution != "Incomplete")
+                        & (raw$Resolution != "Cannot Reproduce")
+                        & (raw$Resolution != "Duplicate")
+                        & (raw$Resolution != "Unresolved")
+                        & (raw$Resolution != "Ready for Code Review")
+                        & (raw$Department != "Dev Offshore")
+                        & (raw$Department != "Platform") 
+                        & (raw$Department !="Business Analyst")
+                        & (raw$Department != "")
+                        & (raw$Issue.Type != "Sub Task"))
+
+offshore_clean <- subset(raw,(raw$Resolution !="Won't Fix") 
+                         & (raw$Resolution != "Incomplete")
+                         & (raw$Resolution != "Cannot Reproduce")
+                         & (raw$Resolution != "Duplicate")
+                         & (raw$Resolution != "Unresolved")
+                         & (raw$Resolution != "Ready for Code Review")
+                         & (raw$Department != "Dev Onshore")
+                         & (raw$Department != "DBE")
+                         & (raw$Department != "DBA")
+                         & (raw$Department != "Platform") 
+                         & (raw$Department != "Dataworks")
+                         & (raw$Department != "")
+                         & (raw$Department !="Business Analyst")
+                         & (raw$Issue.Type != "Sub Task")
+                         & (raw$Department != "Dataworks")
+                         & (raw$Department != "")
+                         & (raw$Project != "Helios")
+                         & (raw$Project != "DataWorks")
+                         & (raw$Project != "OWL"))
+
+onshore_clean <- subset(raw,(raw$Resolution !="Won't Fix") 
+                        & (raw$Resolution != "Incomplete")
+                        & (raw$Resolution != "Cannot Reproduce")
+                        & (raw$Resolution != "Duplicate")
+                        & (raw$Resolution != "Unresolved")
+                        & (raw$Resolution != "Ready for Code Review")
+                        & (raw$Department != "Dev Offshore")
+                        & (raw$Department != "Platform") 
+                        & (raw$Department !="Business Analyst")
+                        & (raw$Department != "")
+                        & (raw$Issue.Type != "Sub Task"))
+
+
+
+#Aggregating metrics by project
+onshore_report <-ddply(onshore_clean,.(Project), summarize,
+                       Bugs = sum(Issue.Type =="Bug"),
+                       Stories = sum(Issue.Type =="Story"),
+                       Task = sum(Issue.Type =="Task"),
+                       Normal = sum(Priority =="Normal"),
+                       Major = sum(Priority == "Major"),
+                       Critical = sum(Priority == "Critical"),
+                       No_Impact = sum(Priority == "No Impact"),
+                       Tickets_Missing_Estimates = sum(is.na(Estimated.Time)),
+                       Tickets_Missing_Story_Points = sum(is.na(Story.Points)), 
+                       Estimated_Time_Sum = sum(Estimated.Time,na.rm=TRUE), 
+                       Story_Points_Sum = sum(Story.Points,na.rm=TRUE))
+
+offshore_report <-ddply(offshore_clean,.(Project), summarize,
+                        Bugs = sum(Issue.Type =="Bug"),
+                        Stories = sum(Issue.Type =="Story"),
+                        Task = sum(Issue.Type =="Task"),
+                        Normal = sum(Priority =="Normal"),
+                        Major = sum(Priority == "Major"),
+                        Critical = sum(Priority == "Critical"),
+                        No_Impact = sum(Priority == "No Impact"),
+                        Tickets_Missing_Estimates = sum(is.na(Estimated.Time)),
+                        Tickets_Missing_Story_Points = sum(is.na(Story.Points)), 
+                        Estimated_Time_Sum = sum(Estimated.Time,na.rm=TRUE), 
+                        Story_Points_Sum = sum(Story.Points,na.rm=TRUE))
+
+#percentages 
+
+onshore_report2 <- mutate(onshore_report,
+                          total_tickets = (Bugs + Stories + Task),
+                          bug_percentage = (Bugs/total_tickets),
+                          Story_percentage = (Stories/total_tickets),
+                          task_percentage = (Task/total_tickets),
+                          normal_percentage = (Normal/total_tickets),
+                          major_percentage = (Major/total_tickets),
+                          critical_percentage = (Critical/total_tickets),
+                          no_impact_percentage = (No_Impact/total_tickets))
+
+
+offshore_report2 <-mutate(offshore_report,
+                          total_tickets = (Bugs + Stories + Task),
+                          bug_percentage = (Bugs/total_tickets),
+                          Story_percentage = (Stories/total_tickets),
+                          task_percentage = (Task/total_tickets),
+                          normal_percentage = (Normal/total_tickets),
+                          major_percentage = (Major/total_tickets),
+                          critical_percentage = (Critical/total_tickets),
+                          no_impact_percentage = (No_Impact/total_tickets)
+)
+
+onshore_report3 <- onshore_report2[-1]
+
+
+# metrics on patch tickets/ per sprint. Dashboard created.
+
+
+onshore_report3
+#onshore_report_total <- apply( X = onshore_report3, MARGIN= 3, FUN= sum)
+
+#Exporting csv              
+#write.csv(onshore_clean, "14.08.0_onshore_report.csv", row.names=F)
+#write.csv(offshore_clean, "14.08.0_offshore_report.csv", row.names=F)
