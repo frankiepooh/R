@@ -122,14 +122,12 @@ offshore_report2 <-mutate(offshore_report,
                           no_impact_percentage = (No_Impact/total_tickets)
 )
 
+#take out the extra column thats generated
 onshore_report3 <- onshore_report2[-1]
 
 
-# metrics on patch tickets/ per sprint. Dashboard created.
-
-
+#quick print for validation
 onshore_report3
-#onshore_report_total <- apply( X = onshore_report3, MARGIN= 3, FUN= sum)
 
 #Exporting csv              
 #write.csv(onshore_clean, "14.08.0_onshore_report.csv", row.names=F)
